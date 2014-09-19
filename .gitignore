@@ -1,0 +1,5 @@
+activate
+pkg/
+src/github.com/
+.idea
+resize_cli_wrapper.iml
