@@ -16,8 +16,8 @@ import (
 	"github.com/nfnt/resize"
 	"io/ioutil"
 	"path/filepath"
-	"sync"
 	"runtime"
+	"sync"
 )
 
 var (
@@ -60,18 +60,22 @@ func main() {
 
 func exists(path string) (bool, error) {
 	_, err := os.Stat(path)
-	if err == nil { return true, nil }
-	if os.IsNotExist(err) { return false, nil }
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
 	return false, err
 }
 
 func execFiles(inputName string) {
 	outDir := inputName + "resized/"
 	outDirExists, err := exists(outDir)
-	if err != nil{
+	if err != nil {
 		log.Fatalln(err)
 	}
-	if !outDirExists{
+	if !outDirExists {
 		err := os.Mkdir(outDir, os.ModePerm)
 		if err != nil {
 			log.Fatalln(err)
@@ -86,7 +90,18 @@ func execFiles(inputName string) {
 		if !f.IsDir() {
 			wg.Add(1)
 			filename := inputName + f.Name()
-			go func(fn, od string){
+			f, err := os.Open(filename)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			format := getFormat(f)
+			f.Close()
+			if format != JPG && format != GIF && format != PNG {
+				wg.Done()
+				continue
+			}
+
+			go func(fn, od string) {
 				defer wg.Done()
 				execFile(fn, true, od)
 			}(filename, outDir)
@@ -102,9 +117,6 @@ func execFile(inputName string, dir bool, outDir string) {
 	}
 	defer file.Close()
 
-	if err != nil {
-		log.Fatalln(err)
-	}
 	format := getFormat(file)
 	img, err := getDecodedImage(file, format)
 	if err != nil {
